@@ -4,12 +4,16 @@ precision highp float;
 
 layout(location = 0) uniform vec2 resolution;
 
+layout(location = 1) uniform vec3 eye;
+layout(location = 2) uniform vec3 target;
+layout(location = 3) uniform vec3 up;
+
 layout(location = 0) out vec4 fragColor;
 
 const int MAX_STEPS = 127;
-const float MAX_DISTANCE = 100.0;
-const float EPSILON = 0.0001;
-const int FRACTAL_ITERATIONS = 8;
+const float MAX_DISTANCE = 300.0;
+const float EPSILON = 0.00001;
+const int FRACTAL_ITERATIONS = 10;
 
 float estimateSphereDistance(vec3 point) {
   return length(point) - 1;
@@ -76,7 +80,7 @@ vec3 estimateNormal(vec3 point) {
     float dist = estimateDistance(point);
     vec2 epsilon = vec2(EPSILON, 0);
 
-    vec3 normal = dist - vec3(estimateDistance(point - epsilon.xyy), estimateDistance(point - epsilon.yxy), estimateDistance(point - epsilon.yyx));
+    vec3 normal = dist - vec3(estimateDistance(point - epsilon.xyy), estimateDistance(point + epsilon.yxy), estimateDistance(point - epsilon.yyx));
 
     return normalize(normal);
 }
@@ -106,14 +110,29 @@ float raymarch(vec3 origin, vec3 direction) {
   return MAX_DISTANCE;
 }
 
+mat4 lookAt(vec3 eye, vec3 target, vec3 up){
+    vec3 f = normalize(target - eye);
+    vec3 s = normalize(cross(f, up));
+    vec3 u = cross(s, f);
+
+    return mat4(
+        vec4(s, 0.0),
+        vec4(u, 0.0),
+        vec4(-f, 0.0),
+        vec4(0.0, 0.0, 0.0, 1)
+    );
+}
+
 void main() {
   // Normalized coordinates. (From -1 to 1 on y axis)
   vec2 coords = (FlutterFragCoord().xy - resolution * 0.5) / resolution.y;
 
-  vec3 origin = vec3(0, 0, 6);
-  vec3 direction = normalize(vec3(coords.x, coords.y, -2));
+  mat4 view = lookAt(eye, target, up);
 
-  float depth = raymarch(origin, direction);
+  vec3 direction = normalize(vec3(coords.x, coords.y, -2));
+  vec3 viewDirection = (view * vec4(direction, 0.0)).xyz;
+
+  float depth = raymarch(eye, viewDirection);
 
   // If we've gone too far, bail.
   if (depth >= MAX_DISTANCE) {
@@ -121,7 +140,7 @@ void main() {
 		return;
   }
 
-  vec3 pointOnSurface = origin + direction * depth;
+  vec3 pointOnSurface = eye + viewDirection * depth;
 
   vec3 color = estimateNormal(pointOnSurface);
 

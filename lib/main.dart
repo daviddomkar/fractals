@@ -1,6 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:fractals/controller.dart';
+import 'package:fractals/controller_widget.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,12 +17,12 @@ Future<void> main() async {
 }
 
 class FractalsApp extends StatelessWidget {
-  final FragmentProgram program;
+  final Controller controller;
 
-  const FractalsApp({
+  FractalsApp({
     super.key,
-    required this.program,
-  });
+    required FragmentProgram program,
+  }) : controller = Controller(program: program);
 
   @override
   Widget build(BuildContext context) {
@@ -30,33 +32,10 @@ class FractalsApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       home: Scaffold(
-        body: CustomPaint(
-          painter: RaymarchingPainter(program: program),
-          child: Container(),
+        body: ControllerWidget(
+          controller: controller,
         ),
       ),
     );
   }
-}
-
-class RaymarchingPainter extends CustomPainter {
-  final FragmentShader _shader;
-
-  RaymarchingPainter({
-    required FragmentProgram program,
-  }) : _shader = program.fragmentShader();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    _shader.setFloat(0, size.width);
-    _shader.setFloat(1, size.height);
-
-    final paint = Paint()..shader = _shader;
-    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
-
-    canvas.drawRect(rect, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
