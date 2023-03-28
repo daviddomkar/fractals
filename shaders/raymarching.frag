@@ -11,9 +11,9 @@ layout(location = 3) uniform vec3 up;
 layout(location = 0) out vec4 fragColor;
 
 const int MAX_STEPS = 127;
-const float MAX_DISTANCE = 300.0;
-const float EPSILON = 0.00001;
-const int FRACTAL_ITERATIONS = 10;
+const float MAX_DISTANCE = 100.0;
+const float EPSILON = 0.001;
+const int FRACTAL_ITERATIONS = 8;
 
 float estimateSphereDistance(vec3 point) {
   return length(point) - 1;
@@ -72,7 +72,7 @@ float estimateMandelbulbDistance(vec3 point) {
 
 float estimateDistance(vec3 point) {
   return estimateMengerSpongeDistance(point);
-  // return estimateSphereDistance(point);
+  return estimateSphereDistance(point);
   // return estimateMandelbulbDistance(point);
 }
 
@@ -110,6 +110,12 @@ float raymarch(vec3 origin, vec3 direction) {
   return MAX_DISTANCE;
 }
 
+vec3 rayDirection(float fieldOfView, vec2 resolution, vec2 coords) {
+    vec2 xy = coords - resolution / 2.0;
+    float z = resolution.y / tan(radians(fieldOfView) / 2.0);
+    return normalize(vec3(xy, -z));
+}
+
 mat4 lookAt(vec3 eye, vec3 target, vec3 up){
     vec3 f = normalize(target - eye);
     vec3 s = normalize(cross(f, up));
@@ -123,13 +129,22 @@ mat4 lookAt(vec3 eye, vec3 target, vec3 up){
     );
 }
 
-void main() {
-  // Normalized coordinates. (From -1 to 1 on y axis)
-  vec2 coords = (FlutterFragCoord().xy - resolution * 0.5) / resolution.y;
+float estimateLight(vec3 point)
+{ 
+    vec3 lightPos = vec3(5, 5, 5); // Light Position
+    vec3 l = normalize(lightPos - point); // Light Vector
+    vec3 n = estimateNormal(point); // Normal Vector
 
+    float dif = dot(n, l); // Diffuse light
+    dif = clamp(dif, 0., 1.); // Clamp so it doesnt go below 0
+
+    return dif;
+}
+
+void main() {
   mat4 view = lookAt(eye, target, up);
 
-  vec3 direction = normalize(vec3(coords.x, coords.y, -2));
+  vec3 direction = rayDirection(45.0, resolution, FlutterFragCoord().xy);
   vec3 viewDirection = (view * vec4(direction, 0.0)).xyz;
 
   float depth = raymarch(eye, viewDirection);
@@ -143,6 +158,9 @@ void main() {
   vec3 pointOnSurface = eye + viewDirection * depth;
 
   vec3 color = estimateNormal(pointOnSurface);
+
+  // float dif = estimateLight(pointOnSurface); // Diffuse lighting
+  // vec3 color = vec3(dif);
 
   fragColor = vec4(color, 1.0);
 }
