@@ -16,6 +16,10 @@ const float MAX_DISTANCE = 100.0;
 const float EPSILON = 0.0001;
 const int FRACTAL_ITERATIONS = 6;
 
+float estimateSphereDistance(vec3 point)
+{
+  return length(point) - 1;
+}
 
 float estimateBoxDistance(vec3 point, vec3 dimensions)
 {
@@ -76,22 +80,33 @@ vec3 estimateNormal(vec3 point) {
     float dist = estimateDistance(point);
     vec2 epsilon = vec2(EPSILON, 0);
 
-    vec3 normal = dist - vec3(estimateDistance(point - epsilon.xyy), estimateDistance(point + epsilon.yxy), estimateDistance(point - epsilon.yyx));
+    vec3 normal = vec3(
+      estimateDistance(point + epsilon.xyy) - estimateDistance(point - epsilon.xyy),
+      estimateDistance(point - epsilon.yxy) - estimateDistance(point + epsilon.yxy),
+      estimateDistance(point + epsilon.yyx) - estimateDistance(point - epsilon.yyx)
+    );
 
     return normalize(normal);
 }
 
-float raymarch(vec3 origin, vec3 direction) {
+// x - distance, y - smallest distance, z - number of steps
+vec3 raymarch(vec3 origin, vec3 direction) {
   float depth = 0;
+  float smallestDistance = MAX_DISTANCE;
 
   // March the ray through the scene.
   for (int i = 0; i < MAX_STEPS; i++) {
     // Estimate the distance at the current position.
     float dist = estimateDistance(origin + direction * depth);
 
+    // Keep track of the smallest distance we've seen.
+    if (dist < smallestDistance) {
+      smallestDistance = dist;
+    }
+
     // If the distance is less than the epsilon, we've hit the surface.
     if (dist < EPSILON) {
-      return depth;
+      return vec3(depth, smallestDistance, float(i));
     }
 
     // Otherwise, keep marching.
@@ -99,11 +114,11 @@ float raymarch(vec3 origin, vec3 direction) {
 
     // If we've gone too far, bail.
     if (depth >= MAX_DISTANCE) {
-      return MAX_DISTANCE;
+      return vec3(MAX_DISTANCE, smallestDistance, float(i));
     }
   }
 
-  return MAX_DISTANCE;
+  return vec3(MAX_DISTANCE, smallestDistance, 0);
 }
 
 vec3 rayDirection(float fieldOfView, vec2 resolution, vec2 coords) {
@@ -143,20 +158,30 @@ void main() {
   vec3 direction = rayDirection(45.0, resolution, FlutterFragCoord().xy);
   vec3 viewDirection = (view * vec4(direction, 0.0)).xyz;
 
-  float depth = raymarch(eye, viewDirection);
+  vec3 result = raymarch(eye, viewDirection);
 
-  // If we've gone too far, bail.
-  if (depth >= MAX_DISTANCE) {
-    fragColor = vec4(0.0, 0.0, 0.0, 1.0);
-		return;
-  }
+  float depth = result.x;
+  float smallestDistance = result.y;
+  float steps = result.z;
 
   vec3 pointOnSurface = eye + viewDirection * depth;
 
+  vec3 color = vec3(1.0 - steps / MAX_STEPS, 0.0, 0.0);
+
+  if (depth >= MAX_DISTANCE) {
+    color = vec3(0.0, 0.0, 0.0);
+  }
+
+  /*
+  if (depth >= MAX_DISTANCE && smallestDistance > EPSILON) {
+    color = vec3(max(1.0 - smallestDistance, 0.0), 0.0, 0.0, 1.0);
+  }
+  */
+
   // vec3 color = estimateNormal(pointOnSurface);
 
-  float dif = estimateLight(pointOnSurface); // Diffuse lighting
-  vec3 color = vec3(dif);
+  // float dif = estimateLight(pointOnSurface); // Diffuse lighting
+  // vec3 color = vec3(dif);
 
   fragColor = vec4(color, 1.0);
 }
