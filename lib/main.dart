@@ -41,8 +41,25 @@ class FractalsApp extends StatelessWidget {
         body: Row(
           children: [
             Expanded(
-              child: ControllerView(
-                controller: controller,
+              child: Stack(
+                children: [
+                  ControllerView(
+                    controller: controller,
+                  ),
+                  const Align(
+                    alignment: Alignment.topLeft,
+                    child: Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Text(
+                        'Camera Movement: WASD (Space - UP, Shift - DOWN)\nCamera Rotation: Drag Mouse',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  )
+                ],
               ),
             ),
             SizedBox(

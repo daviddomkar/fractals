@@ -28,7 +28,6 @@ class Controller with WindowListener {
     fractalType = FractalType.mandelbulb;
     warpSpace = false;
 
-    _shader = program.fragmentShader();
     _camera = Camera(
       position: Vector3(-4, -1, 4),
       yaw: -90 + 45,
@@ -39,6 +38,7 @@ class Controller with WindowListener {
   }
 
   void attach() {
+    _shader = program.fragmentShader();
     RawKeyboard.instance.addListener(onKey);
     windowManager.addListener(this);
   }
