@@ -15,6 +15,7 @@ class Controller with WindowListener {
 
   late FractalType fractalType;
   late bool warpSpace;
+  late Color fractalColor;
 
   late FragmentShader _shader;
   late Camera _camera;
@@ -27,6 +28,7 @@ class Controller with WindowListener {
   }) : _logicalKeysPressed = {} {
     fractalType = FractalType.mandelbulb;
     warpSpace = false;
+    fractalColor = const Color(0xFFFF0000);
 
     _camera = Camera(
       position: Vector3(-4, -1, 4),
@@ -144,6 +146,11 @@ class Controller with WindowListener {
     });
 
     _shader.setFloat(12, warpSpace ? 1 : 0);
+
+    _shader.setFloat(13, fractalColor.red / 255);
+    _shader.setFloat(14, fractalColor.blue / 255);
+    _shader.setFloat(15, fractalColor.green / 255);
+    _shader.setFloat(16, fractalColor.alpha / 255);
 
     // Create a rectangle that covers the entire canvas and attach shader
     final paint = Paint()..shader = _shader;

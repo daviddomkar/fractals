@@ -11,6 +11,8 @@ layout(location = 4) uniform vec3 up;
 
 layout(location = 5) uniform float warpSpace;
 
+layout(location = 6) uniform vec4 fractalColor;
+
 layout(location = 0) out vec4 fragColor;
 
 const int MAX_STEPS = 100;
@@ -177,7 +179,7 @@ void main() {
     return;
   }
 
-  vec3 color = vec3(1.0 - steps / MAX_STEPS, 0.0, 0.0);
+  vec4 color = vec4(fractalColor.rgb * (1.0 - steps / MAX_STEPS), 1.0);
 
   /*
   if (depth >= MAX_DISTANCE && smallestDistance > EPSILON) {
@@ -190,5 +192,5 @@ void main() {
   // float dif = estimateLight(pointOnSurface); // Diffuse lighting
   // vec3 color = vec3(dif);
 
-  fragColor = vec4(color, 1.0);
+  fragColor = color;
 }
