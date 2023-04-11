@@ -3,21 +3,19 @@
 precision highp float;
 
 layout(location = 0) uniform vec2 resolution;
+layout(location = 1) uniform float fractalTypeValue;
 
-layout(location = 1) uniform vec3 eye;
-layout(location = 2) uniform vec3 target;
-layout(location = 3) uniform vec3 up;
+layout(location = 2) uniform vec3 eye;
+layout(location = 3) uniform vec3 target;
+layout(location = 4) uniform vec3 up;
 
 layout(location = 0) out vec4 fragColor;
 
-const int MAX_STEPS = 127;
+const int MAX_STEPS = 100;
 const float MAX_DISTANCE = 100.0;
-const float EPSILON = 0.001;
-const int FRACTAL_ITERATIONS = 8;
+const float EPSILON = 0.0001;
+const int FRACTAL_ITERATIONS = 6;
 
-float estimateSphereDistance(vec3 point) {
-  return length(point) - 1;
-}
 
 float estimateBoxDistance(vec3 point, vec3 dimensions)
 {
@@ -54,7 +52,7 @@ float estimateMandelbulbDistance(vec3 point) {
 	for (int i = 0; i < FRACTAL_ITERATIONS; i++) {
 		r = length(z);
 		if (r > 5) break;
-		
+
 		float theta = acos(z.z / r);
 		float phi = atan(z.y, z.x);
 		dr =  pow(r, 8 - 1.0) * 8 * dr + 1.0;
@@ -62,7 +60,7 @@ float estimateMandelbulbDistance(vec3 point) {
 		float zr = pow(r, 8);
 		theta = theta * 8;
 		phi = phi * 8;
-		
+
 		z = zr * vec3(sin(theta) * cos(phi), sin(phi) * sin(theta), cos(theta));
 		z += point;
 	}
@@ -71,9 +69,7 @@ float estimateMandelbulbDistance(vec3 point) {
 }
 
 float estimateDistance(vec3 point) {
-  return estimateMengerSpongeDistance(point);
-  return estimateSphereDistance(point);
-  // return estimateMandelbulbDistance(point);
+  return mix(estimateMandelbulbDistance(point), estimateMengerSpongeDistance(point), fractalTypeValue);
 }
 
 vec3 estimateNormal(vec3 point) {
@@ -99,7 +95,7 @@ float raymarch(vec3 origin, vec3 direction) {
     }
 
     // Otherwise, keep marching.
-    depth += dist;
+    depth += dist * 0.5;
 
     // If we've gone too far, bail.
     if (depth >= MAX_DISTANCE) {
@@ -157,10 +153,10 @@ void main() {
 
   vec3 pointOnSurface = eye + viewDirection * depth;
 
-  vec3 color = estimateNormal(pointOnSurface);
+  // vec3 color = estimateNormal(pointOnSurface);
 
-  // float dif = estimateLight(pointOnSurface); // Diffuse lighting
-  // vec3 color = vec3(dif);
+  float dif = estimateLight(pointOnSurface); // Diffuse lighting
+  vec3 color = vec3(dif);
 
   fragColor = vec4(color, 1.0);
 }

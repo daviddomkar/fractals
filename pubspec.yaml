@@ -12,6 +12,7 @@ dependencies:
 
   vector_math: ^2.1.4
   collection: ^1.17.0
+  window_manager: ^0.3.2
 
 dev_dependencies:
   flutter_test:

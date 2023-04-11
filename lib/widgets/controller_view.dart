@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 
-import 'controller.dart';
+import '../controller.dart';
 
-class ControllerWidget extends StatelessWidget {
+class ControllerView extends StatelessWidget {
   final Controller controller;
 
-  const ControllerWidget({
+  const ControllerView({
     super.key,
     required this.controller,
   });
@@ -49,15 +49,17 @@ class ControllerRenderWidget extends LeafRenderObjectWidget {
 }
 
 class ControllerRenderBox extends RenderBox {
-  Controller _controller;
-
-  int? _frameCallbackId;
+  late Ticker _ticker;
   Duration _previousDeltaDuration;
+
+  Controller _controller;
 
   ControllerRenderBox({
     required Controller controller,
   })  : _controller = controller,
-        _previousDeltaDuration = Duration.zero;
+        _previousDeltaDuration = Duration.zero {
+    _ticker = Ticker(_tick);
+  }
 
   @override
   bool get sizedByParent => true;
@@ -92,13 +94,14 @@ class ControllerRenderBox extends RenderBox {
   }
 
   void _scheduleTick() {
-    _frameCallbackId = SchedulerBinding.instance.scheduleFrameCallback(_tick);
+    if (!_ticker.isActive) {
+      _ticker.start();
+    }
   }
 
   void _unscheduleTick() {
-    if (_frameCallbackId != null) {
-      SchedulerBinding.instance.cancelFrameCallbackWithId(_frameCallbackId!);
-    }
+    _ticker.stop();
+    _previousDeltaDuration = Duration.zero;
   }
 
   void _tick(Duration timestamp) {

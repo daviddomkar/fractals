@@ -1,13 +1,14 @@
-import 'dart:math';
 import 'dart:ui';
 
 import 'package:collection/collection.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
+import 'package:fractals/fractal_type.dart';
 import 'package:vector_math/vector_math_64.dart';
+import 'package:window_manager/window_manager.dart';
 import 'camera.dart';
 
-class Controller {
+class Controller with WindowListener {
   final FragmentProgram program;
 
   Controller({
@@ -18,28 +19,56 @@ class Controller {
   late Camera _camera;
   late bool _pointerDown;
 
-  late double _yaw;
-  late double _pitch;
+  late double _fractalTypeValue;
+  late double _targetFractalTypeValue;
+
+  late Set<LogicalKeyboardKey> _logicalKeysPressed;
+
+  set fractalType(FractalType type) {
+    _targetFractalTypeValue = type.value;
+  }
 
   void attach() {
     _shader = program.fragmentShader();
-    _camera = Camera();
+    _camera = Camera(
+      position: Vector3(0, 0, 6),
+    );
     _pointerDown = false;
+    _fractalTypeValue = FractalType.mandelbulb.value;
+    _targetFractalTypeValue = _fractalTypeValue;
+    _logicalKeysPressed = {};
+    RawKeyboard.instance.addListener(onKey);
+    windowManager.addListener(this);
+  }
 
-    _yaw = -90;
-    _pitch = 0;
+  void detach() {
+    windowManager.removeListener(this);
+    RawKeyboard.instance.removeListener(onKey);
+    _shader.dispose();
+  }
 
-    _updateCameraRotation(Offset.zero);
+  void onKey(RawKeyEvent event) {
+    if (event is RawKeyDownEvent) {
+      _logicalKeysPressed.add(event.logicalKey);
+    } else if (event is RawKeyUpEvent) {
+      _logicalKeysPressed.remove(event.logicalKey);
+    }
+  }
+
+  @override
+  void onWindowBlur() {
+    _logicalKeysPressed.clear();
   }
 
   void onPointerDown(PointerDownEvent event) {
+    primaryFocus?.unfocus();
     _pointerDown = true;
-    _updateCameraRotation(event.localDelta);
+    _camera.rotate(event.localDelta);
   }
 
   void onPointerMove(PointerMoveEvent event) {
     if (_pointerDown) {
-      _updateCameraRotation(event.localDelta);
+      _camera.rotate(event.localDelta);
     }
   }
 
@@ -48,82 +77,75 @@ class Controller {
   }
 
   bool _isKeyPressed(LogicalKeyboardKey key) {
-    return RawKeyboard.instance.keysPressed.contains(key);
-  }
-
-  void _updateCameraRotation(Offset delta) {
-    double sensitivity = 0.1;
-    delta *= sensitivity;
-
-    _yaw += delta.dx;
-    _pitch += delta.dy;
-
-    if (_pitch > 89.0) _pitch = 89.0;
-    if (_pitch < -89.0) _pitch = -89.0;
-
-    Vector3 direction = Vector3(
-      cos(radians(_yaw)) * cos(radians(_pitch)),
-      sin(radians(_pitch)),
-      sin(radians(_yaw)) * cos(radians(_pitch)),
-    );
-
-    _camera.front = direction.normalized();
+    return _logicalKeysPressed.contains(key);
   }
 
   void update(double deltaTime) {
     if (_isKeyPressed(LogicalKeyboardKey.keyW)) {
-      _camera.position += _camera.front * deltaTime;
+      primaryFocus?.unfocus();
+      _camera.forward(deltaTime);
     }
 
     if (_isKeyPressed(LogicalKeyboardKey.keyS)) {
-      _camera.position -= _camera.front * deltaTime;
+      primaryFocus?.unfocus();
+      _camera.backward(deltaTime);
     }
 
     if (_isKeyPressed(LogicalKeyboardKey.keyA)) {
-      _camera.position -=
-          _camera.front.cross(_camera.up).normalized() * deltaTime;
+      primaryFocus?.unfocus();
+      _camera.left(deltaTime);
     }
 
     if (_isKeyPressed(LogicalKeyboardKey.keyD)) {
-      _camera.position +=
-          _camera.front.cross(_camera.up).normalized() * deltaTime;
+      primaryFocus?.unfocus();
+      _camera.right(deltaTime);
     }
 
     if (_isKeyPressed(LogicalKeyboardKey.space)) {
-      _camera.position -= _camera.up * deltaTime;
+      primaryFocus?.unfocus();
+      _camera.upward(deltaTime);
     }
 
     if (_isKeyPressed(LogicalKeyboardKey.shiftLeft)) {
-      _camera.position += _camera.up * deltaTime;
+      primaryFocus?.unfocus();
+      _camera.downward(deltaTime);
     }
+
+    _animateFractalType(deltaTime);
+  }
+
+  void _animateFractalType(double deltaTime) {
+    final amount = (_targetFractalTypeValue - _fractalTypeValue);
+    _fractalTypeValue += amount * deltaTime * 5;
   }
 
   void render(Canvas canvas, Size size) {
+    // Set uniforms
     _shader.setFloat(0, size.width);
     _shader.setFloat(1, size.height);
 
+    _shader.setFloat(2, _fractalTypeValue);
+
     // Eye
-    _camera.position.storage.forEachIndexed((index, element) {
-      _shader.setFloat(index + 2, element);
+    _camera.eye.storage.forEachIndexed((index, element) {
+      _shader.setFloat(index + 3, element);
     });
 
     // Target
-    (_camera.position + _camera.front).storage.forEachIndexed((index, element) {
-      _shader.setFloat(index + 5, element);
+    _camera.target.storage.forEachIndexed((index, element) {
+      _shader.setFloat(index + 6, element);
     });
 
     // Up
     _camera.up.storage.forEachIndexed((index, element) {
-      _shader.setFloat(index + 8, element);
+      _shader.setFloat(index + 9, element);
     });
 
+    // Create a rectangle that covers the entire canvas and attach shader
     final paint = Paint()..shader = _shader;
     final rect = Rect.fromLTWH(0, 0, size.width, size.height);
 
+    // Draw the rectangle
     canvas.drawRect(rect, paint);
-  }
-
-  void detach() {
-    _shader.dispose();
   }
 }
