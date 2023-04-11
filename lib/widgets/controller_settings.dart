@@ -14,11 +14,13 @@ class ControllerSettings extends StatefulWidget {
 
 class _ControllerSettingsState extends State<ControllerSettings> {
   late FractalType _fractalType;
+  late bool _warpSpace;
 
   @override
   void initState() {
     super.initState();
-    _fractalType = FractalType.mandelbulb;
+    _fractalType = widget.controller.fractalType;
+    _warpSpace = widget.controller.warpSpace;
   }
 
   @override
@@ -27,7 +29,10 @@ class _ControllerSettingsState extends State<ControllerSettings> {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          DropdownButton(
+          DropdownButtonFormField(
+            decoration: const InputDecoration(
+              labelText: 'Fractal Type',
+            ),
             autofocus: false,
             value: _fractalType,
             isExpanded: true,
@@ -44,6 +49,16 @@ class _ControllerSettingsState extends State<ControllerSettings> {
               });
             },
           ),
+          CheckboxListTile(
+            title: const Text('Warp Space'),
+            value: _warpSpace,
+            onChanged: (value) {
+              setState(() {
+                _warpSpace = value ?? false;
+                widget.controller.warpSpace = _warpSpace;
+              });
+            },
+          )
         ],
       ),
     );

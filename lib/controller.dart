@@ -11,32 +11,34 @@ import 'camera.dart';
 class Controller with WindowListener {
   final FragmentProgram program;
 
-  Controller({
-    required this.program,
-  });
+  final Set<LogicalKeyboardKey> _logicalKeysPressed;
+
+  late FractalType fractalType;
+  late bool warpSpace;
 
   late FragmentShader _shader;
   late Camera _camera;
   late bool _pointerDown;
 
   late double _fractalTypeValue;
-  late double _targetFractalTypeValue;
 
-  late Set<LogicalKeyboardKey> _logicalKeysPressed;
+  Controller({
+    required this.program,
+  }) : _logicalKeysPressed = {} {
+    fractalType = FractalType.mandelbulb;
+    warpSpace = false;
 
-  set fractalType(FractalType type) {
-    _targetFractalTypeValue = type.value;
+    _shader = program.fragmentShader();
+    _camera = Camera(
+      position: Vector3(-4, -1, 4),
+      yaw: -90 + 45,
+      pitch: 10,
+    );
+    _pointerDown = false;
+    _fractalTypeValue = fractalType.value;
   }
 
   void attach() {
-    _shader = program.fragmentShader();
-    _camera = Camera(
-      position: Vector3(0, 0, 6),
-    );
-    _pointerDown = false;
-    _fractalTypeValue = FractalType.mandelbulb.value;
-    _targetFractalTypeValue = _fractalTypeValue;
-    _logicalKeysPressed = {};
     RawKeyboard.instance.addListener(onKey);
     windowManager.addListener(this);
   }
@@ -115,7 +117,7 @@ class Controller with WindowListener {
   }
 
   void _animateFractalType(double deltaTime) {
-    final amount = (_targetFractalTypeValue - _fractalTypeValue);
+    final amount = (fractalType.value - _fractalTypeValue);
     _fractalTypeValue += amount * deltaTime * 5;
   }
 
@@ -140,6 +142,8 @@ class Controller with WindowListener {
     _camera.up.storage.forEachIndexed((index, element) {
       _shader.setFloat(index + 9, element);
     });
+
+    _shader.setFloat(12, warpSpace ? 1 : 0);
 
     // Create a rectangle that covers the entire canvas and attach shader
     final paint = Paint()..shader = _shader;

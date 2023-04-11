@@ -19,8 +19,8 @@ class Camera {
     double pitch = 0,
   })  : _up = up ?? Vector3(0, 1, 0),
         _position = position ?? Vector3.zero(),
-        _yaw = -90,
-        _pitch = 0;
+        _yaw = yaw,
+        _pitch = pitch;
 
   void forward(double amount) {
     _position += front * amount;

@@ -9,6 +9,8 @@ layout(location = 2) uniform vec3 eye;
 layout(location = 3) uniform vec3 target;
 layout(location = 4) uniform vec3 up;
 
+layout(location = 5) uniform float warpSpace;
+
 layout(location = 0) out vec4 fragColor;
 
 const int MAX_STEPS = 100;
@@ -73,6 +75,10 @@ float estimateMandelbulbDistance(vec3 point) {
 }
 
 float estimateDistance(vec3 point) {
+  if (warpSpace > 0.5) {
+    point = mod(point+3., 6.)-3.;
+  }
+
   return mix(estimateMandelbulbDistance(point), estimateMengerSpongeDistance(point), fractalTypeValue);
 }
 
@@ -166,11 +172,12 @@ void main() {
 
   vec3 pointOnSurface = eye + viewDirection * depth;
 
-  vec3 color = vec3(1.0 - steps / MAX_STEPS, 0.0, 0.0);
-
   if (depth >= MAX_DISTANCE) {
-    color = vec3(0.0, 0.0, 0.0);
+    fragColor = vec4(0.0, 0.0, 0.0, 1.0);
+    return;
   }
+
+  vec3 color = vec3(1.0 - steps / MAX_STEPS, 0.0, 0.0);
 
   /*
   if (depth >= MAX_DISTANCE && smallestDistance > EPSILON) {
