@@ -3,14 +3,13 @@
 precision highp float;
 
 layout(location = 0) uniform vec2 resolution;
-layout(location = 1) uniform float fractalTypeValue;
 
-layout(location = 2) uniform vec3 eye;
-layout(location = 3) uniform vec3 target;
-layout(location = 4) uniform vec3 up;
+layout(location = 1) uniform vec3 eye;
+layout(location = 2) uniform vec3 target;
+layout(location = 3) uniform vec3 up;
 
+layout(location = 4) uniform float fractalTypeValue;
 layout(location = 5) uniform float warpSpace;
-
 layout(location = 6) uniform vec4 fractalColor;
 
 layout(location = 0) out vec4 fragColor;
@@ -18,7 +17,7 @@ layout(location = 0) out vec4 fragColor;
 const int MAX_STEPS = 100;
 const float MAX_DISTANCE = 100.0;
 const float EPSILON = 0.0001;
-const int FRACTAL_ITERATIONS = 6;
+const int FRACTAL_ITERATIONS = 7;
 
 float estimateSphereDistance(vec3 point)
 {
@@ -31,6 +30,7 @@ float estimateBoxDistance(vec3 point, vec3 dimensions)
   return length(max(q, 0)) + min(max(q.x, max(q.y, q.z)), 0);
 }
 
+// https://iquilezles.org/articles/menger/
 float estimateMengerSpongeDistance(vec3 point)
 {
   float d = estimateBoxDistance(point, vec3(1));
@@ -53,6 +53,7 @@ float estimateMengerSpongeDistance(vec3 point)
   return d;
 }
 
+// http://blog.hvidtfeldts.net/index.php/2011/09/distance-estimated-3d-fractals-v-the-mandelbulb-different-de-approximations/
 float estimateMandelbulbDistance(vec3 point) {
 	vec3 z = point;
 	float dr = 1.0;

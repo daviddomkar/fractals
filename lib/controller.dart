@@ -128,25 +128,23 @@ class Controller with WindowListener {
     _shader.setFloat(0, size.width);
     _shader.setFloat(1, size.height);
 
-    _shader.setFloat(2, _fractalTypeValue);
-
     // Eye
     _camera.eye.storage.forEachIndexed((index, element) {
-      _shader.setFloat(index + 3, element);
+      _shader.setFloat(index + 2, element);
     });
 
     // Target
     _camera.target.storage.forEachIndexed((index, element) {
-      _shader.setFloat(index + 6, element);
+      _shader.setFloat(index + 5, element);
     });
 
     // Up
     _camera.up.storage.forEachIndexed((index, element) {
-      _shader.setFloat(index + 9, element);
+      _shader.setFloat(index + 8, element);
     });
 
+    _shader.setFloat(11, _fractalTypeValue);
     _shader.setFloat(12, warpSpace ? 1 : 0);
-
     _shader.setFloat(13, fractalColor.red / 255);
     _shader.setFloat(14, fractalColor.blue / 255);
     _shader.setFloat(15, fractalColor.green / 255);
