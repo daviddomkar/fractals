@@ -11,33 +11,29 @@ layout(location = 3) uniform vec3 up;
 layout(location = 4) uniform float fractalTypeValue;
 layout(location = 5) uniform float warpSpace;
 layout(location = 6) uniform vec4 fractalColor;
+layout(location = 7) uniform vec4 rotation;
 
 layout(location = 0) out vec4 fragColor;
 
 const int MAX_STEPS = 100;
 const float MAX_DISTANCE = 100.0;
 const float EPSILON = 0.0001;
-const int FRACTAL_ITERATIONS = 7;
+const int FRACTAL_ITERATIONS = 5;
 
-float estimateSphereDistance(vec3 point)
-{
-  return length(point) - 1;
-}
-
-float estimateBoxDistance(vec3 point, vec3 dimensions)
-{
+float estimateBoxDistance(vec3 point, vec3 dimensions) {
   vec3 q = abs(point) - dimensions;
   return length(max(q, 0)) + min(max(q.x, max(q.y, q.z)), 0);
 }
 
 // https://iquilezles.org/articles/menger/
-float estimateMengerSpongeDistance(vec3 point)
-{
+float estimateMengerSpongeDistance(vec3 point) {
   float d = estimateBoxDistance(point, vec3(1));
 
   float s = 1;
   for(int i = 0; i < FRACTAL_ITERATIONS; i++)
   {
+      point = point + 2.0 * cross(rotation.xyz, cross(rotation.xyz, point) + rotation.w * point);
+
       vec3 a = mod(point * s, 2) - 1;
       s *= 3;
       vec3 r = abs(1 - 3 * abs(a));
@@ -59,6 +55,8 @@ float estimateMandelbulbDistance(vec3 point) {
 	float dr = 1.0;
 	float r = 0.0;
 	for (int i = 0; i < FRACTAL_ITERATIONS; i++) {
+    point = point + 2.0 * cross(rotation.xyz, cross(rotation.xyz, point) + rotation.w * point);
+
 		r = length(z);
 		if (r > 5) break;
 
@@ -82,7 +80,11 @@ float estimateDistance(vec3 point) {
     point = mod(point+3., 6.)-3.;
   }
 
-  return mix(estimateMandelbulbDistance(point), estimateMengerSpongeDistance(point), fractalTypeValue);
+  // float plane = dot(point, vec3(-1, -1, 1));
+
+  float fractal = mix(estimateMandelbulbDistance(point), estimateMengerSpongeDistance(point), fractalTypeValue);
+
+  return fractal;
 }
 
 vec3 estimateNormal(vec3 point) {
