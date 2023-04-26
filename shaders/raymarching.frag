@@ -10,15 +10,24 @@ layout(location = 3) uniform vec3 up;
 
 layout(location = 4) uniform float fractalTypeValue;
 layout(location = 5) uniform float warpSpace;
-layout(location = 6) uniform vec4 fractalColor;
-layout(location = 7) uniform vec4 rotation;
+layout(location = 6) uniform float glow;
+layout(location = 7) uniform vec4 fractalColor;
+layout(location = 8) uniform vec4 rotation;
+layout(location = 9) uniform float planeY;
+layout(location = 10) uniform vec4 planeRotation;
+
 
 layout(location = 0) out vec4 fragColor;
 
-const int MAX_STEPS = 100;
+const int MAX_STEPS = 80;
 const float MAX_DISTANCE = 100.0;
 const float EPSILON = 0.0001;
 const int FRACTAL_ITERATIONS = 5;
+
+
+vec3 rotatePoint(vec3 point, vec4 quaternion) {
+  return point + 2.0 * cross(quaternion.xyz, cross(quaternion.xyz, point) + quaternion.w * point);
+}
 
 float estimateBoxDistance(vec3 point, vec3 dimensions) {
   vec3 q = abs(point) - dimensions;
@@ -32,7 +41,7 @@ float estimateMengerSpongeDistance(vec3 point) {
   float s = 1;
   for(int i = 0; i < FRACTAL_ITERATIONS; i++)
   {
-      point = point + 2.0 * cross(rotation.xyz, cross(rotation.xyz, point) + rotation.w * point);
+      point = rotatePoint(point, rotation);
 
       vec3 a = mod(point * s, 2) - 1;
       s *= 3;
@@ -52,21 +61,24 @@ float estimateMengerSpongeDistance(vec3 point) {
 // http://blog.hvidtfeldts.net/index.php/2011/09/distance-estimated-3d-fractals-v-the-mandelbulb-different-de-approximations/
 float estimateMandelbulbDistance(vec3 point) {
 	vec3 z = point;
+
+  float power = 8.0;
 	float dr = 1.0;
 	float r = 0.0;
+
 	for (int i = 0; i < FRACTAL_ITERATIONS; i++) {
-    point = point + 2.0 * cross(rotation.xyz, cross(rotation.xyz, point) + rotation.w * point);
+    point = rotatePoint(point, rotation);
 
 		r = length(z);
 		if (r > 5) break;
 
 		float theta = acos(z.z / r);
 		float phi = atan(z.y, z.x);
-		dr =  pow(r, 8 - 1.0) * 8 * dr + 1.0;
+		dr =  pow(r, power - 1.0) * power * dr + 1.0;
 
-		float zr = pow(r, 8);
-		theta = theta * 8;
-		phi = phi * 8;
+		float zr = pow(r, power);
+		theta = theta * power;
+		phi = phi * power;
 
 		z = zr * vec3(sin(theta) * cos(phi), sin(phi) * sin(theta), cos(theta));
 		z += point;
@@ -77,27 +89,14 @@ float estimateMandelbulbDistance(vec3 point) {
 
 float estimateDistance(vec3 point) {
   if (warpSpace > 0.5) {
-    point = mod(point+3., 6.)-3.;
+    point = mod(point + 3, 6) - 3;
   }
 
-  // float plane = dot(point, vec3(-1, -1, 1));
+  float plane = dot(rotatePoint(point, planeRotation) + planeY, vec3(0, -1, 0));
 
   float fractal = mix(estimateMandelbulbDistance(point), estimateMengerSpongeDistance(point), fractalTypeValue);
 
-  return fractal;
-}
-
-vec3 estimateNormal(vec3 point) {
-    float dist = estimateDistance(point);
-    vec2 epsilon = vec2(EPSILON, 0);
-
-    vec3 normal = vec3(
-      estimateDistance(point + epsilon.xyy) - estimateDistance(point - epsilon.xyy),
-      estimateDistance(point - epsilon.yxy) - estimateDistance(point + epsilon.yxy),
-      estimateDistance(point + epsilon.yyx) - estimateDistance(point - epsilon.yyx)
-    );
-
-    return normalize(normal);
+  return max(fractal, plane);
 }
 
 // x - distance, y - smallest distance, z - number of steps
@@ -151,18 +150,6 @@ mat4 lookAt(vec3 eye, vec3 target, vec3 up){
     );
 }
 
-float estimateLight(vec3 point)
-{ 
-    vec3 lightPos = vec3(5, 5, 5); // Light Position
-    vec3 l = normalize(lightPos - point); // Light Vector
-    vec3 n = estimateNormal(point); // Normal Vector
-
-    float dif = dot(n, l); // Diffuse light
-    dif = clamp(dif, 0., 1.); // Clamp so it doesnt go below 0
-
-    return dif;
-}
-
 void main() {
   mat4 view = lookAt(eye, target, up);
 
@@ -189,11 +176,6 @@ void main() {
     color = vec3(max(1.0 - smallestDistance, 0.0), 0.0, 0.0, 1.0);
   }
   */
-
-  // vec3 color = estimateNormal(pointOnSurface);
-
-  // float dif = estimateLight(pointOnSurface); // Diffuse lighting
-  // vec3 color = vec3(dif);
 
   fragColor = color;
 }

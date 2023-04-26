@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-import 'package:fractals/fractal_type.dart';
 import 'package:vector_math/vector_math_64.dart';
 
 import '../controller.dart';
+import '../extensions.dart';
+import '../fractal_type.dart';
 
 class ControllerSettings extends StatefulWidget {
   final Controller controller;
@@ -19,6 +20,8 @@ class _ControllerSettingsState extends State<ControllerSettings> {
   late Color _fractalColor;
   late bool _warpSpace;
   late Vector3 _rotation;
+  late double _planeY;
+  late Vector3 _planeRotation;
 
   @override
   void initState() {
@@ -26,11 +29,9 @@ class _ControllerSettingsState extends State<ControllerSettings> {
     _fractalType = widget.controller.fractalType;
     _warpSpace = widget.controller.warpSpace;
     _fractalColor = widget.controller.fractalColor;
-    _rotation = Vector3(
-      degrees(widget.controller.rotation.x),
-      degrees(widget.controller.rotation.y),
-      degrees(widget.controller.rotation.z),
-    );
+    _rotation = widget.controller.rotation.toEuler();
+    _planeY = widget.controller.planeY;
+    _planeRotation = widget.controller.planeRotation.toEuler();
   }
 
   @override
@@ -94,16 +95,17 @@ class _ControllerSettingsState extends State<ControllerSettings> {
               const SizedBox(height: 16),
               const Text('Rotate X'),
               Slider(
-                min: -360,
-                max: 360,
-                divisions: 360,
+                min: -180,
+                max: 180,
                 value: _rotation.x,
                 label: '${_rotation.x.round()}°',
                 onChanged: (value) {
                   setState(() {
-                    _rotation.x = value;
-                    widget.controller.rotation.x = radians(
-                      value.roundToDouble(),
+                    _rotation.x = value.roundToDouble();
+                    widget.controller.rotation.setEuler(
+                      radians(_rotation.x),
+                      radians(_rotation.y),
+                      radians(_rotation.z),
                     );
                   });
                 },
@@ -111,16 +113,17 @@ class _ControllerSettingsState extends State<ControllerSettings> {
               const SizedBox(height: 16),
               const Text('Rotate Y'),
               Slider(
-                min: -360,
-                max: 360,
-                divisions: 360,
+                min: -180,
+                max: 180,
                 value: _rotation.y,
                 label: '${_rotation.y.round()}°',
                 onChanged: (value) {
                   setState(() {
-                    _rotation.y = value;
-                    widget.controller.rotation.y = radians(
-                      value.roundToDouble(),
+                    _rotation.y = value.roundToDouble();
+                    widget.controller.rotation.setEuler(
+                      radians(_rotation.x),
+                      radians(_rotation.y),
+                      radians(_rotation.z),
                     );
                   });
                 },
@@ -128,20 +131,71 @@ class _ControllerSettingsState extends State<ControllerSettings> {
               const SizedBox(height: 16),
               const Text('Rotate Z'),
               Slider(
-                min: -360,
-                max: 360,
-                divisions: 360,
+                min: -180,
+                max: 180,
                 value: _rotation.z,
                 label: '${_rotation.z.round()}°',
                 onChanged: (value) {
                   setState(() {
-                    _rotation.z = value;
-                    widget.controller.rotation.z = radians(
-                      value.roundToDouble(),
+                    _rotation.z = value.roundToDouble();
+                    widget.controller.rotation.setEuler(
+                      radians(_rotation.x),
+                      radians(_rotation.y),
+                      radians(_rotation.z),
                     );
                   });
                 },
-              )
+              ),
+              const SizedBox(height: 16),
+              const Text('Plane Y'),
+              Slider(
+                min: -1.5,
+                max: 1.5,
+                value: _planeY,
+                label: _planeY.toStringAsFixed(2),
+                onChanged: (value) {
+                  setState(() {
+                    _planeY = value;
+                    widget.controller.planeY = _planeY;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+              const Text('Plane Rotate X'),
+              Slider(
+                min: -180,
+                max: 180,
+                value: _planeRotation.y,
+                label: '${_planeRotation.y.round()}°',
+                onChanged: (value) {
+                  setState(() {
+                    _planeRotation.y = value.roundToDouble();
+                    widget.controller.planeRotation.setEuler(
+                      radians(_planeRotation.x),
+                      radians(_planeRotation.y),
+                      radians(_planeRotation.z),
+                    );
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+              const Text('Plane Rotate Z'),
+              Slider(
+                min: -180,
+                max: 180,
+                value: _planeRotation.z,
+                label: '${_planeRotation.z.round()}°',
+                onChanged: (value) {
+                  setState(() {
+                    _planeRotation.z = value.roundToDouble();
+                    widget.controller.planeRotation.setEuler(
+                      radians(_planeRotation.x),
+                      radians(_planeRotation.y),
+                      radians(_planeRotation.z),
+                    );
+                  });
+                },
+              ),
             ],
           ),
         ),

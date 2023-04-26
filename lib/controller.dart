@@ -15,8 +15,11 @@ class Controller with WindowListener {
 
   late FractalType fractalType;
   late bool warpSpace;
+  late bool glow;
   late Color fractalColor;
   late Quaternion rotation;
+  late double planeY;
+  late Quaternion planeRotation;
 
   late FragmentShader _shader;
   late Camera _camera;
@@ -29,8 +32,11 @@ class Controller with WindowListener {
   }) : _logicalKeysPressed = {} {
     fractalType = FractalType.mandelbulb;
     warpSpace = false;
+    glow = false;
     fractalColor = const Color(0xFFFF0000);
     rotation = Quaternion.identity();
+    planeY = 1.5;
+    planeRotation = Quaternion.identity();
 
     _camera = Camera(
       position: Vector3(-4, -1, 4),
@@ -147,13 +153,20 @@ class Controller with WindowListener {
 
     _shader.setFloat(11, _fractalTypeValue);
     _shader.setFloat(12, warpSpace ? 1 : 0);
-    _shader.setFloat(13, fractalColor.red / 255);
-    _shader.setFloat(14, fractalColor.blue / 255);
-    _shader.setFloat(15, fractalColor.green / 255);
-    _shader.setFloat(16, fractalColor.alpha / 255);
+    _shader.setFloat(13, glow ? 1 : 0);
+    _shader.setFloat(14, fractalColor.red / 255);
+    _shader.setFloat(15, fractalColor.blue / 255);
+    _shader.setFloat(16, fractalColor.green / 255);
+    _shader.setFloat(17, fractalColor.alpha / 255);
 
     rotation.storage.forEachIndexed((index, element) {
-      _shader.setFloat(index + 17, element);
+      _shader.setFloat(index + 18, element);
+    });
+
+    _shader.setFloat(22, planeY);
+
+    planeRotation.storage.forEachIndexed((index, element) {
+      _shader.setFloat(index + 23, element);
     });
 
     // Create a rectangle that covers the entire canvas and attach shader
