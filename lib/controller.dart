@@ -15,11 +15,11 @@ class Controller with WindowListener {
 
   late FractalType fractalType;
   late bool warpSpace;
-  late bool glow;
+  late double glow;
   late Color fractalColor;
   late Quaternion rotation;
-  late double planeY;
-  late Quaternion planeRotation;
+  late double planeSlice;
+  late Vector3 planeOrientation;
 
   late FragmentShader _shader;
   late Camera _camera;
@@ -32,11 +32,11 @@ class Controller with WindowListener {
   }) : _logicalKeysPressed = {} {
     fractalType = FractalType.mandelbulb;
     warpSpace = false;
-    glow = false;
+    glow = 0.5;
     fractalColor = const Color(0xFFFF0000);
     rotation = Quaternion.identity();
-    planeY = 1.5;
-    planeRotation = Quaternion.identity();
+    planeSlice = 1.5;
+    planeOrientation = Vector3(0, -1, 0);
 
     _camera = Camera(
       position: Vector3(-4, -1, 4),
@@ -153,7 +153,7 @@ class Controller with WindowListener {
 
     _shader.setFloat(11, _fractalTypeValue);
     _shader.setFloat(12, warpSpace ? 1 : 0);
-    _shader.setFloat(13, glow ? 1 : 0);
+    _shader.setFloat(13, glow);
     _shader.setFloat(14, fractalColor.red / 255);
     _shader.setFloat(15, fractalColor.blue / 255);
     _shader.setFloat(16, fractalColor.green / 255);
@@ -163,9 +163,9 @@ class Controller with WindowListener {
       _shader.setFloat(index + 18, element);
     });
 
-    _shader.setFloat(22, planeY);
+    _shader.setFloat(22, planeSlice);
 
-    planeRotation.storage.forEachIndexed((index, element) {
+    planeOrientation.storage.forEachIndexed((index, element) {
       _shader.setFloat(index + 23, element);
     });
 

@@ -19,19 +19,21 @@ class _ControllerSettingsState extends State<ControllerSettings> {
   late FractalType _fractalType;
   late Color _fractalColor;
   late bool _warpSpace;
+  late double _glow;
   late Vector3 _rotation;
-  late double _planeY;
-  late Vector3 _planeRotation;
+  late double _planeSlice;
+  late Vector3 _planeOrientation;
 
   @override
   void initState() {
     super.initState();
     _fractalType = widget.controller.fractalType;
     _warpSpace = widget.controller.warpSpace;
+    _glow = widget.controller.glow;
     _fractalColor = widget.controller.fractalColor;
     _rotation = widget.controller.rotation.toEuler();
-    _planeY = widget.controller.planeY;
-    _planeRotation = widget.controller.planeRotation.toEuler();
+    _planeSlice = widget.controller.planeSlice;
+    _planeOrientation = widget.controller.planeOrientation;
   }
 
   @override
@@ -64,6 +66,20 @@ class _ControllerSettingsState extends State<ControllerSettings> {
                   setState(() {
                     _fractalType = type!;
                     widget.controller.fractalType = type;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+              const Text('Glow Intensity'),
+              Slider(
+                min: 0.0,
+                max: 1.0,
+                value: _glow,
+                label: _glow.toStringAsFixed(2),
+                onChanged: (value) {
+                  setState(() {
+                    _glow = value;
+                    widget.controller.glow = _glow;
                   });
                 },
               ),
@@ -147,52 +163,58 @@ class _ControllerSettingsState extends State<ControllerSettings> {
                 },
               ),
               const SizedBox(height: 16),
-              const Text('Plane Y'),
+              const Text('Plane Slice'),
               Slider(
-                min: -1.5,
-                max: 1.5,
-                value: _planeY,
-                label: _planeY.toStringAsFixed(2),
+                min: -3,
+                max: 3,
+                value: _planeSlice,
+                label: _planeSlice.toStringAsFixed(2),
                 onChanged: (value) {
                   setState(() {
-                    _planeY = value;
-                    widget.controller.planeY = _planeY;
+                    _planeSlice = value;
+                    widget.controller.planeSlice = _planeSlice;
                   });
                 },
               ),
               const SizedBox(height: 16),
-              const Text('Plane Rotate X'),
+              const Text('Plane Orientation X'),
               Slider(
-                min: -180,
-                max: 180,
-                value: _planeRotation.y,
-                label: '${_planeRotation.y.round()}°',
+                min: -1,
+                max: 1,
+                value: _planeOrientation.x,
+                label: _planeOrientation.x.toStringAsFixed(2),
                 onChanged: (value) {
                   setState(() {
-                    _planeRotation.y = value.roundToDouble();
-                    widget.controller.planeRotation.setEuler(
-                      radians(_planeRotation.x),
-                      radians(_planeRotation.y),
-                      radians(_planeRotation.z),
-                    );
+                    _planeOrientation.x = value;
+                    widget.controller.planeOrientation = _planeOrientation;
                   });
                 },
               ),
               const SizedBox(height: 16),
-              const Text('Plane Rotate Z'),
+              const Text('Plane Orientation Y'),
               Slider(
-                min: -180,
-                max: 180,
-                value: _planeRotation.z,
-                label: '${_planeRotation.z.round()}°',
+                min: -1,
+                max: 1,
+                value: _planeOrientation.y,
+                label: _planeOrientation.y.toStringAsFixed(2),
                 onChanged: (value) {
                   setState(() {
-                    _planeRotation.z = value.roundToDouble();
-                    widget.controller.planeRotation.setEuler(
-                      radians(_planeRotation.x),
-                      radians(_planeRotation.y),
-                      radians(_planeRotation.z),
-                    );
+                    _planeOrientation.y = value;
+                    widget.controller.planeOrientation = _planeOrientation;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+              const Text('Plane Orientation Z'),
+              Slider(
+                min: -1,
+                max: 1,
+                value: _planeOrientation.z,
+                label: _planeOrientation.z.toStringAsFixed(2),
+                onChanged: (value) {
+                  setState(() {
+                    _planeOrientation.z = value;
+                    widget.controller.planeOrientation = _planeOrientation;
                   });
                 },
               ),

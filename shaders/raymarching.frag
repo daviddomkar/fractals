@@ -13,13 +13,13 @@ layout(location = 5) uniform float warpSpace;
 layout(location = 6) uniform float glow;
 layout(location = 7) uniform vec4 fractalColor;
 layout(location = 8) uniform vec4 rotation;
-layout(location = 9) uniform float planeY;
-layout(location = 10) uniform vec4 planeRotation;
+layout(location = 9) uniform float planeSlice;
+layout(location = 10) uniform vec3 planeOrientation;
 
 
 layout(location = 0) out vec4 fragColor;
 
-const int MAX_STEPS = 80;
+const int MAX_STEPS = 100;
 const float MAX_DISTANCE = 100.0;
 const float EPSILON = 0.0001;
 const int FRACTAL_ITERATIONS = 5;
@@ -92,7 +92,7 @@ float estimateDistance(vec3 point) {
     point = mod(point + 3, 6) - 3;
   }
 
-  float plane = dot(rotatePoint(point, planeRotation) + planeY, vec3(0, -1, 0));
+  float plane = dot(point + planeSlice, normalize(planeOrientation));
 
   float fractal = mix(estimateMandelbulbDistance(point), estimateMengerSpongeDistance(point), fractalTypeValue);
 
@@ -150,6 +150,32 @@ mat4 lookAt(vec3 eye, vec3 target, vec3 up){
     );
 }
 
+vec4 getAmbientColor(vec3 result) {
+  float depth = result.x;
+  float steps = result.z;
+
+  if (depth < MAX_DISTANCE) {
+    return vec4(fractalColor.rgb * (1.0 - steps / MAX_STEPS), 1.0);
+  } else {
+    return vec4(0.0, 0.0, 0.0, 1.0);
+  }
+}
+
+vec4 getGlowColor(vec3 result) {
+  float depth = result.x;
+  float smallestDistance = result.y;
+  float steps = result.z;
+
+  if (smallestDistance <= 1 || depth < MAX_DISTANCE) {
+    vec4 ambientOcclusion = getAmbientColor(result);
+    vec4 glowColor = vec4(fractalColor.rgb * (1 - pow(smallestDistance, 0.3)), 1.0);
+
+    return mix(glowColor, ambientOcclusion, (1 - pow(smallestDistance, 0.01)));
+  } else {
+    return vec4(0.0, 0.0, 0.0, 1.0);
+  }
+}
+
 void main() {
   mat4 view = lookAt(eye, target, up);
 
@@ -164,18 +190,10 @@ void main() {
 
   vec3 pointOnSurface = eye + viewDirection * depth;
 
-  if (depth >= MAX_DISTANCE) {
-    fragColor = vec4(0.0, 0.0, 0.0, 1.0);
-    return;
-  }
+  vec4 ambientColor = getAmbientColor(result);
+  vec4 glowColor = getGlowColor(result);
 
-  vec4 color = vec4(fractalColor.rgb * (1.0 - steps / MAX_STEPS), 1.0);
-
-  /*
-  if (depth >= MAX_DISTANCE && smallestDistance > EPSILON) {
-    color = vec3(max(1.0 - smallestDistance, 0.0), 0.0, 0.0, 1.0);
-  }
-  */
-
+  vec4 color = mix(ambientColor, glowColor, glow);
+  
   fragColor = color;
 }
