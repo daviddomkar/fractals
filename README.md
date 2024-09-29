@@ -1,16 +1,33 @@
 # fractals
 
-A new Flutter project.
+A 3D Fractal Explorer written in Flutter.
 
-## Getting Started
+Currently, the app supports the following fractals:
 
-This project is a starting point for a Flutter application.
+- Mandelbulb
+- Menger Sponge
 
-A few resources to get you started if this is your first Flutter project:
+## Features
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- [x] 3D Fractal Rendering
+- [x] Camera Controls
+- [x] Space rotation
+- [x] Space warping
+- [x] Glow effect
+- [x] Fractal slicing using a plane
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Features are largely limited due to current limits of the Flutter framework regarding custom shaders. (Hopefully, this will change in the future when Impeller is everywhere with Flutter GPU support).
+
+## Screenshots
+
+![Mandelbulb](screenshots/mandelbulb.png)
+
+![Menger Sponge](screenshots/menger_sponge_warped.png)
+
+## Building
+
+To build the app, you need to have Flutter installed. Then, you can run the following command:
+
+```bash
+flutter run
+```
